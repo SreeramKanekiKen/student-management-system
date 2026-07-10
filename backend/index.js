@@ -12,6 +12,7 @@ app.use(express.json());
 
 // Mount Modular Routes
 app.use('/api/health', require('./routes/healthRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(PORT, () => {
     console.log(`🚀 Server spinning on http://localhost:${PORT}`);
