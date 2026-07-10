@@ -10,17 +10,30 @@ const loginUser = async (req, res) => {
     const { username, password } = req.body;
 
     try {
+        console.log('--- DEBUG START ---');
+        console.log('Incoming Request Body:', req.body);
+
         // 1. Check if the user exists in the database
         const userResult = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
 
-        if (userResult.rows.length == 0) {
+        console.log('Database Rows Found:', userResult.rows);
+
+        if (userResult.rows.length === 0) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }
 
         const user = userResult.rows[0];
 
         // 2. Verify the password matches the stored hash
+        const cleanHash = user.password_hash.trim();
+        
+        console.log('Original Hash Length:', user.password_hash.length);
+        console.log('Trimmed Hash Length:', cleanHash.length);
+
         const isMatch = await bcrypt.compare(password, user.password_hash);
+        console.log('Bcrypt Match Result:', isMatch);
+        console.log('--- DEBUG END ---');
+        
         if (!isMatch) {
             return res.status(401).json({ message: 'Invalid username or password' });
         }

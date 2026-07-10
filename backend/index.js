@@ -14,6 +14,9 @@ app.use(express.json());
 app.use('/api/health', require('./routes/healthRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 
+const bcrypt = require('bcryptjs');
+console.log('🔑 GENERATED HASH:', bcrypt.hashSync('password123', 10));
+
 app.listen(PORT, () => {
     console.log(`🚀 Server spinning on http://localhost:${PORT}`);
 });
