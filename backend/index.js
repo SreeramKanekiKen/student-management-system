@@ -13,6 +13,8 @@ app.use(express.json());
 // Mount Modular Routes
 app.use('/api/health', require('./routes/healthRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/classes', require('./routes/classRoutes'));
+app.use('/api/students', require('./routes/studentRoutes'));
 
 const bcrypt = require('bcryptjs');
 console.log('🔑 GENERATED HASH:', bcrypt.hashSync('password123', 10));
