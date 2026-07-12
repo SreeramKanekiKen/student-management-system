@@ -9,7 +9,7 @@ const getStudentGrades = async (req, res) => {
 
     try {
         const result = await pool.query(
-            `SELECT id, subject, assignment_name, score, max_score, recorded_at FROM grades WHERE student_id = $1,` [studentId]
+            `SELECT id, subject, assignment_name, score, max_score, recorded_at FROM grades WHERE student_id = $1`, [studentId]
         );
 
         res.json(result.rows);
