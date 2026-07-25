@@ -1,107 +1,117 @@
-import React, { useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import API from '../api';
 
 const AttendanceDashboard = () => {
-    const [classes, setClasses] = useState([]);
-    const [selectedClass, setSelectedClass] = useState('');
-    const [students, setStudents] = useState([]);
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [classes, setClasses] = useState([]);
+  const [selectedClass, setSelectedClass] = useState('');
+  const [students, setStudents] = useState([]);
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
-    const [message, setMessage] = useState('');
+  // 1. Fetch available classes
+  useEffect(() => {
+    const fetchClasses = async () => {
+      try {
+        const response = await API.get('/classes');
+        setClasses(response.data || []);
+        if (response.data && response.data.length > 0) {
+          setSelectedClass(response.data[0].id);
+        }
+      } catch (err) {
+        setError('Failed to load classes from server.');
+      }
+    };
+    fetchClasses();
+  }, []);
 
-    useEffect(() => {
-        const fetchClasses = async () => {
-            try {
-                const response = await API.get('/classes');
-                setClasses(response.data);
+  // 2. Fetch student roster
+  useEffect(() => {
+    if (!selectedClass) return;
 
-                if (response.data.length > 0) {
-                    setSelectedClass(response.data[0].id);
-                }
-            }
-            catch (err) {
-                setError('Failed to load classes from server.');
-            }
-        };
-        fetchClasses();
-    }, []);
-
-    useEffect(() => {
-        if (!selectedClass) return;
-
-        const fetchRoster = async () => {
-            setLoading(true);
-            setError('');
-            setMessage('');
-
-            try {
-                const response = await API.get('/students/${selectedClass}');
-                const initializedRoster = response.data.map(student => ({
-                    ...student,
-                    status: true
-                }));
-                setStudents(initializedRoster);
-            }
-            catch (err) {
-                setError('Failed to fetch student roster.');
-            }
-            finally {
-                setLoading(false);
-            }
-        };
-
-        fetchRoster();
-    }, [selectedClass]);
-
-    const handleStatusChange = (studentId) => {
-        setStudents(prevStudents =>
-            prevStudents.map(student =>
-                student.id === studentID ? { ...student, status: !student.status } : student
-            )
-        );
+    const fetchRoster = async () => {
+      setLoading(true);
+      setError('');
+      setMessage('');
+      try {
+        const response = await API.get('/students/' + selectedClass);
+        const rosterData = Array.isArray(response.data) ? response.data : [];
+        const initializedRoster = rosterData.map(student => ({
+          ...student,
+          status: true 
+        }));
+        setStudents(initializedRoster);
+      } catch (err) {
+        setError('Failed to fetch student roster.');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setError('');
-        setMessage('');
+    fetchRoster();
+  }, [selectedClass]);
 
-        const payload = {
-            classId: parseInd(selectedClass),
-            date: date,
-            records: students.map(student => ({
-                studentID: student.id,
-                status: student.status
-            }))
-        };
+  // 3. Toggle attendance status safely
+  const handleStatusChange = (e, studentId) => {
+    e.preventDefault(); // Prevents accidental form submission
+    e.stopPropagation();
+    setStudents(prevStudents =>
+      prevStudents.map(student =>
+        student.id === studentId ? { ...student, status: !student.status } : student
+      )
+    );
+  };
 
-        try {
-            const response = await API.post('/attendance', payload);
-            setMessage(response.data.message || 'Attendance recorded successfully!');
-        }
-        catch (err) {
-            setError(err.response?.message || 'Error saving attendance records.');
-        }
+  // 4. Batch update payload
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+
+    const payload = {
+      classId: parseInt(selectedClass, 10),
+      date: date,
+      records: students.map(student => ({
+        studentId: student.id,
+        status: student.status
+      }))
     };
 
-    return (
+    try {
+      const response = await API.post('/attendance', payload);
+      setMessage(response.data?.message || 'Attendance recorded successfully!');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Error saving attendance records.');
+    }
+  };
+
+  // Safe Name Extractor Helper
+  const getStudentName = (student) => {
+    if (!student) return 'Unknown Student';
+    if (student.name) return student.name;
+    if (student.first_name) {
+      return `${student.first_name} ${student.last_name || ''}`.trim();
+    }
+    return `Student ID: ${student.id}`;
+  };
+
+  return (
     <div style={{ maxWidth: '700px', margin: '30px auto', padding: '20px', border: '1px solid #ddd', borderRadius: '8px', backgroundColor: '#fff', color: '#333' }}>
-      <h2>📋 Daily Attendance Tracker</h2>
+      <h2 style={{ color: '#1a1a1a', margin: '0 0 10px 0' }}>📋 Daily Attendance Tracker</h2>
       <hr style={{ margin: '15px 0', borderColor: '#eee' }} />
 
       {error && <div style={{ color: 'red', marginBottom: '15px', fontWeight: 'bold' }}>⚠️ {error}</div>}
       {message && <div style={{ color: 'green', marginBottom: '15px', fontWeight: 'bold' }}>✅ {message}</div>}
 
-      {/* Control Configuration Panel */}
       <div style={{ display: 'flex', gap: '20px', marginBottom: '20px' }}>
         <div style={{ flex: 1 }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Select Class Group:</label>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Select Class Group:</label>
           <select 
             value={selectedClass} 
             onChange={(e) => setSelectedClass(e.target.value)}
-            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff', color: '#333' }}
           >
             {classes.map(c => (
               <option key={c.id} value={c.id}>{c.name || `Class ${c.id}`}</option>
@@ -110,17 +120,16 @@ const AttendanceDashboard = () => {
         </div>
 
         <div style={{ flex: 1 }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Target Date:</label>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', color: '#333' }}>Target Date:</label>
           <input 
             type="date" 
             value={date} 
             onChange={(e) => setDate(e.target.value)}
-            style={{ width: '100%', padding: '9px', borderRadius: '4px', border: '1px solid #ccc' }}
+            style={{ width: '100%', padding: '9px', borderRadius: '4px', border: '1px solid #ccc', backgroundColor: '#fff', color: '#333' }}
           />
         </div>
       </div>
 
-      {/* Roster Grid and Submission Form */}
       {loading ? (
         <p style={{ textAlign: 'center', color: '#666' }}>Compiling class roster list...</p>
       ) : (
@@ -128,32 +137,31 @@ const AttendanceDashboard = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '20px' }}>
             <thead>
               <tr style={{ backgroundColor: '#f8f9fa', borderBottom: '2px solid #dee2e6' }}>
-                <th style={{ padding: '12px', textAlign: 'left' }}>Student Name</th>
-                <th style={{ padding: '12px', textAlign: 'center', width: '150px' }}>Status Toggle</th>
+                <th style={{ padding: '12px', textAlign: 'left', color: '#333' }}>Student Name</th>
+                <th style={{ padding: '12px', textAlign: 'center', width: '150px', color: '#333' }}>Status Toggle</th>
               </tr>
             </thead>
             <tbody>
-              {students.length === 0 ? (
+              {!students || students.length === 0 ? (
                 <tr>
-                  <td colSpan="2" style={{ padding: '20px', textAlign: 'center', color: '#999' }}>No students assigned to this class segment.</td>
+                  <td colSpan="2" style={{ padding: '20px', textAlign: 'center', color: '#666' }}>No students assigned to this class segment.</td>
                 </tr>
               ) : (
                 students.map(student => (
                   <tr key={student.id} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '12px', fontWeight: '500' }}>
-                      {student.name || `Student ID: ${student.id}`}
+                    <td style={{ padding: '12px', fontWeight: '500', color: '#333' }}>
+                      {getStudentName(student)}
                     </td>
                     <td style={{ padding: '12px', textAlign: 'center' }}>
                       <button
                         type="button"
-                        onClick={() => handleStatusChange(student.id)}
+                        onClick={(e) => handleStatusChange(e, student.id)}
                         style={{
                           padding: '6px 16px',
                           borderRadius: '20px',
                           border: 'none',
                           cursor: 'pointer',
                           fontWeight: 'bold',
-                          transition: 'background-color 0.2s',
                           backgroundColor: student.status ? '#28a745' : '#dc3545',
                           color: 'white'
                         }}
@@ -167,7 +175,7 @@ const AttendanceDashboard = () => {
             </tbody>
           </table>
 
-          {students.length > 0 && (
+          {students && students.length > 0 && (
             <button 
               type="submit" 
               style={{ width: '100%', padding: '12px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}

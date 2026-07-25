@@ -2,7 +2,7 @@ import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
 import AttendanceDashboard from './components/AttendanceDashboard';
-import '/.App.css';
+import './App.css';
 
 const MainDashboardLayout = () => {
   const { logout } = useAuth();
@@ -11,7 +11,7 @@ const MainDashboardLayout = () => {
     <div>
       {/* Basic Utility Global Top Bar */}
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 40px', backgroundColor: '#343a40', color: 'white' }}>
-        <h3 style={{ margin: 0 }}>🏫 Institutional Management Platform</h3>
+        <h3 style={{ margin: 0 }}>🏫 Student Management Platform</h3>
         <button 
           onClick={logout} 
           style={{ padding: '6px 14px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}

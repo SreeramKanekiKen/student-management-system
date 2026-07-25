@@ -7,7 +7,7 @@ const getStudentsByClass = async (req, res) => {
     const { classId } = req.params;
 
     try {
-        const result = await pool.query('SELECT * FROM students WHERE class_id = $1', [classId]);
+        const result = await pool.query(`SELECT * FROM students WHERE class_id = $1 ORDER BY id ASC`, [classId]);
         res.json(result.rows);
     }
     catch (err) {
