@@ -69,7 +69,7 @@ const AttendanceDashboard = () => {
         setMessage('');
 
         const payload = {
-            classId: parseInd(selectedClass);
+            classId: parseInd(selectedClass),
             date: date,
             records: students.map(student => ({
                 studentID: student.id,
