@@ -1,17 +1,29 @@
 import React from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './components/Login';
+import AttendanceDashboard from './components/AttendanceDashboard';
+import '/.App.css';
 
-const DashboardTest = () => {
+const MainDashboardLayout = () => {
   const { logout } = useAuth();
-
+  
   return (
-    <div style={{ maxWidth: '600px', margin: '50px auto', padding: '20px', textAlign: 'center' }}>
-      <h1>🎉 Welcome to the Teacher Dashboard!</h1>
-      <p>Your JWT token is securely stored and will auto-inject into all future API requests.</p>
-      <button onClick={logout} style={{ padding: '10px 20px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '20px' }}>
-        Log Out
-      </button>
+    <div>
+      {/* Basic Utility Global Top Bar */}
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 40px', backgroundColor: '#343a40', color: 'white' }}>
+        <h3 style={{ margin: 0 }}>🏫 Institutional Management Platform</h3>
+        <button 
+          onClick={logout} 
+          style={{ padding: '6px 14px', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+        >
+          Disconnect Session
+        </button>
+      </header>
+
+      {/* Main Core Work Area */}
+      <main style={{ padding: '20px' }}>
+        <AttendanceDashboard />
+      </main>
     </div>
   );
 };
@@ -23,7 +35,7 @@ const AppContent = () => {
     return <Login />;
   }
 
-  return <DashboardTest />;
+  return <MainDashboardLayout />;
 };
 
 function App() {
